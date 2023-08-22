@@ -35,7 +35,10 @@ INSTALLED_APPS = [
     'api',
     'apiauth',
     'rest_framework',
-    'rest_framework_simplejwt',
+    'corsheaders',   # if frontend is using any other port so we need corsheaders // pip install django-cors-headers
+    
+    
+    # 'rest_framework_simplejwt',
     
     # paypal integration
     'paypal.standard.ipn',
@@ -55,6 +58,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',   # this need to be added to django.middleware
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -149,30 +153,30 @@ STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-REST_FRAMEWORK ={
-    'DEFAULT_AUTHENTICATION_CLASSES':[
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
-    ],
-}
+# REST_FRAMEWORK ={
+#     'DEFAULT_AUTHENTICATION_CLASSES':[
+#         'rest_framework_simplejwt.authentication.JWTAuthentication',
+#     ],
+#     'DEFAULT_PERMISSION_CLASSES': [
+#         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+#     ],
+# }
 
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
-    'SLIDING_TOKEN_LIFETIME': timedelta(days=14),
-    'SLIDING_TOKEN_REFRESH_EXP_CLAIM': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': False,
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
-    'USER_ID_FIELD': 'id',
-    'USER_ID_CLAIM': 'user_id',
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-    'TOKEN_TYPE_CLAIM': 'token_type',
-}
+# SIMPLE_JWT = {
+#     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+#     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+#     'SLIDING_TOKEN_LIFETIME': timedelta(days=14),
+#     'SLIDING_TOKEN_REFRESH_EXP_CLAIM': timedelta(days=1),
+#     'ROTATE_REFRESH_TOKENS': False,
+#     'ALGORITHM': 'HS256',
+#     'SIGNING_KEY': SECRET_KEY,
+#     'AUTH_HEADER_TYPES': ('Bearer',),
+#     'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+#     'USER_ID_FIELD': 'id',
+#     'USER_ID_CLAIM': 'user_id',
+#     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+#     'TOKEN_TYPE_CLAIM': 'token_type',
+# }
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 #  email details
@@ -187,3 +191,6 @@ EMAIL_USE_SSL = False
 # paypal credentials
 PAYPAL_RECEIVER_EMAIL = "sb-tioev26192971@business.example.com"
 PAYPAL_TEST = True
+
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True

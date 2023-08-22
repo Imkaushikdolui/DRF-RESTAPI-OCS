@@ -5,12 +5,13 @@ from .serializers import *
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .email import send_otp
-from django.contrib.auth import authenticate
-from rest_framework import status
 from django.contrib.auth import get_user_model
 
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
+from rest_framework.exceptions import AuthenticationFailed
+import jwt
+import datetime
 # Create your views here.
 
 # JWT authentication
@@ -19,57 +20,82 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class AccountLoginAPI(APIView):
-    def post(self, request, *args, **kwargs):
-        try:
-            data = request.data
-            serializer = LoginSerializer(data=data)
-            if serializer.is_valid():
-                email = serializer.data['email']
-                password = serializer.data['password']
-                
-                # Check if the user exists with the given email
-                try:
-                    user = User.objects.get(email=email)
-                except User.DoesNotExist:
-                    user = None
 
-                # Authenticate the user based on email and password
-                if user is not None and user.check_password(password):
-                    if not user.is_verified:
-                        return Response({
-                            'status': status.HTTP_400_BAD_REQUEST,
-                            'message': 'Your Account is not verified',
-                            'data': {}
-                        }, status=status.HTTP_400_BAD_REQUEST)
-                    
-                    refresh = RefreshToken.for_user(user)
-                    return Response({
-                        'refresh': str(refresh),
-                        'access': str(refresh.access_token),
-                    })
-                
-                return Response({
-                    'status': status.HTTP_400_BAD_REQUEST,
-                    'message': 'Invalid email or password',
-                    'data': {}
-                }, status=status.HTTP_400_BAD_REQUEST)
-                
-            return Response({
-                'status': status.HTTP_400_BAD_REQUEST,
-                'message': 'Invalid request',
-                'data': serializer.errors,
-            }, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            print(e)
-            return Response({
-                'status': status.HTTP_500_INTERNAL_SERVER_ERROR,
-                'message': 'Internal server error',
-                'data': {}
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    def post(self, request, *args, **kwargs):
+        email = request.data['email']
+        password = request.data['password']
+
+        user = User.objects.filter(email=email).first()
+
+        if user is None:
+            raise AuthenticationFailed("User not found")
+
+        if not user.check_password(password):
+            raise AuthenticationFailed("Incorrect password")
+
+        payload = {
+            'id': user.id,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
+            'iat': datetime.datetime.utcnow()
+        }
+
+        token = jwt.encode(payload, 'secret', algorithm='HS256')
+
+        response = Response()
+
+        # httponly = true //becuase we dont want frontend to acess the token,its for the backend only
+        response.set_cookie(key='jwt', value=token, httponly=True)
+
+        response.data = {
+            "jwt": token,
+        }
+
+        return response
+
+
 account_login_view = AccountLoginAPI.as_view()
 
 
+class UserJWTView(APIView):
+
+    def get(self, request):
+        token = request.COOKIES.get('jwt')
+
+        if not token:
+            raise AuthenticationFailed("UnAuthenticated!!")
+
+        try:
+            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
+            raise AuthenticationFailed("Token has expired")
+        except jwt.DecodeError:
+            raise AuthenticationFailed("Token is invalid")
+
+        # Use single quotes around 'id' to access the key
+        user_id = payload['id']
+        user = User.objects.get(id=user_id)
+        serializer = AccountSerializer(user)
+        return Response(serializer.data)
+
+
+user_jwt_view = UserJWTView.as_view()
+
+
+class AccountLogoutAPI(APIView):
+    def post(self, request):
+
+        response = Response({"message": "Logged out successfully"})
+
+        # Delete the 'jwt' cookie by setting its value to an empty string and setting its expiration time to a past date
+        response.delete_cookie('jwt')
+
+        return response
+
+
+account_logout_view = AccountLogoutAPI.as_view()
+
 # ACCOUNT REGISTER APIViews
+
 
 class AccountRegisterAPI(APIView):
 
@@ -106,7 +132,7 @@ class VerifyOTP(APIView):
             if serializer.is_valid():
                 email = serializer.data['email']
                 otp = serializer.data['otp']
-                
+
                 user = Account.objects.filter(email=email)
                 if not user.exists():
                     return Response({
@@ -123,8 +149,7 @@ class VerifyOTP(APIView):
                 user = user.first()
                 user.is_verified = True
                 user.save()
-                    
-                    
+
                 return Response({
                     'status': 200,
                     'message': 'Account verified !!!',
@@ -136,11 +161,13 @@ class VerifyOTP(APIView):
                 'message': 'Registration failed something went wrong!!',
                 'data': serializer.errors,
             })
-            
+
         except Exception as e:
-            print(e)   
+            print(e)
+
 
 account_verify_view = VerifyOTP.as_view()
+
 
 class AccountListAPIView(generics.ListAPIView):
     serializer_class = AccountSerializer
@@ -153,9 +180,11 @@ class AccountListAPIView(generics.ListAPIView):
         time_threshold = timezone.now() - timezone.timedelta(hours=24)
 
         # Delete unverified accounts older than 24 hours
-        Account.objects.filter(is_verified=False, date_joined__lte=time_threshold).delete()
+        Account.objects.filter(
+            is_verified=False, date_joined__lte=time_threshold).delete()
 
         return queryset
+
 
 account_list_view = AccountListAPIView.as_view()
 
