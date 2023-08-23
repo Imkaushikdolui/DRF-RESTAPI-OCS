@@ -2,6 +2,10 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+## Demo
+https://kaushikdolui.pythonanywhere.com/api       -> for crud ops related to course and its contents
+https://kaushikdolui.pythonanywhere.com/apiauth   -> for account register and login (jwt) and account crud ops
+
 ## Description
 Django Rest Framework - API for a online course application , having the following features
 
