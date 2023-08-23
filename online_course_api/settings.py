@@ -23,9 +23,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '_!j&fm&qti_k*8jqe3!!d1wp2060@*rd$xh&&0gelvy#^8p*%e'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', 'kaushikdolui.pythonanywhere.com']
 
 
 # Application definition
@@ -92,22 +92,22 @@ WSGI_APPLICATION = 'online_course_api.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-#     }
-# }
-DATABASES={
+DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'ocs_api',  #change the db to use
-        'USER':'postgres',
-        'PASSWORD':'admin',
-        'HOST':'localhost',
-        'PORT':'5432'
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
+# DATABASES={
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'ocs_api',  #change the db to use
+#         'USER':'postgres',
+#         'PASSWORD':'admin',
+#         'HOST':'localhost',
+#         'PORT':'5432'
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
@@ -151,6 +151,7 @@ STATICFILES_DIRS = [
 ]
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'Static')
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # REST_FRAMEWORK ={
